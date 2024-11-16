@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Righteous&family=Varela+Round&display=swap');
+/* ---------- Height ---------- */
+.h-100vh{
+    height: 100vh !important;
+}
+
+/* ---------- Font ---------- */
+.font-varela{
+    font-family: "Varela Round", sans-serif;
+}
+/* ---------- hover-bi ---------- */
+.bi:hover{
+    cursor: pointer;
+}
+
+/* ---------- hover-bi ---------- */
+.hover-li{
+    transition: 0.2s;
+}
+.hover-li:hover{
+    background: #7709406a;
+    transition: 0.2s;
+}
+/* ---------- bg-pink ----------- */
+.bg-pink{
+    background-color: #c11c84 !important;
+}

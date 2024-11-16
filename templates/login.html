@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="../static/style/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+    <!--  login-form -->
+    <div class="h-100vh container-fuid d-flex justify-content-center align-items-center">
+        <div class="shadow rounded-2 p-5 font-varela col-12 col-md-8 col-lg-5">
+            <form action="/login" method="POST">
+                <h1 class="fw-bold border-bottom pb-2 mb-4">Account Login</h1>
+                {% if error_message %}
+                    <div class="text-danger alert alert-danger" role="alert">
+                        {{ error_message }}
+                    </div>
+                {% endif %}
+                <label for="usernameoremail" class="mb-2">Username Or Email</label>
+                <div class="d-flex align-items-center bg-secondary-subtle border border-1 mb-3 rounded-2 overflow-hidden">
+                    <input type="text" name="usernameoremail" placeholder="Username or Email" required class="form-control shadow-none rounded-0 border-0">
+                    <p class="mx-3 mb-0">@</p>
+                </div>
+                <label for="password" class="mb-2">Password</label>
+                <div class="d-flex align-items-center bg-secondary-subtle border border-1 mb-1 rounded-2 overflow-hidden">
+                    <input id="pass" type="password" name="password" placeholder="Password" required class="form-control shadow-none rounded-0 border-0">
+                    <i class="bi bi-eye mx-3 " id="show"></i>
+                    <i class="bi bi-eye-slash mx-3 d-none" id="hide"></i>
+                </div>
+                <div style="font-size: 13px;" class="d-flex justify-content-between">
+                    <a href="" class="mt-2 nav-link text-secondary">Forget Password</a>
+                    <div class="text-center mt-2">
+                        <span>Don't have account? </span>
+                        <span class="text-secondary mx-1">
+                            <a href={{url_for('show_register_form')}} class="text-decoration-none text-dark">Register</a>
+                        </span>
+                    </div>
+                </div>
+                <button type="submit" class="btn mt-3 w-100 bg-dark text-light shadow-none">Login</button>               
+            </form>         
+        </div>
+    </div>
+</body>
+<script src="../static/script/togglepass.js "></script>
+</html>
