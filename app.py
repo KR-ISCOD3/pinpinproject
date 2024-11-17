@@ -128,7 +128,7 @@ def show_add_product_form():
         return redirect(url_for('show_login_form'))
     
     success = request.args.get('success', False)
-    return render_template('add_product.html', success=success)
+    return render_template('products.html', success=success)
 
 
 # Route to handle product submission

@@ -26,6 +26,7 @@
 
          // Update the cart table
          updateCartTable();
+
      });
  });
 
@@ -36,6 +37,7 @@ function updateCartTable() {
 
     let total = 0;
 
+    // Create rows for each product in the cart
     cart.forEach(product => {
         total += product.price * product.qty;
 
@@ -64,7 +66,22 @@ function updateCartTable() {
         cartTable.appendChild(row);
     });
 
+    let payment = 0;   
+
+    // Iterate over the rows inside the cart table to calculate the total payment
+    const rows = cartTable.querySelectorAll('tr'); // Get all rows in the table
+    rows.forEach(row => {
+        const priceElement = row.querySelector('.text-danger'); // Get the <p> with class 'text-danger' (price)
+        if (priceElement) {
+            const priceText = priceElement.textContent.replace('$', ''); // Remove '$' symbol
+            payment += parseFloat(priceText); // Add the price to the total
+        }
+    });
+
+    // Update the total in the total price section
+    document.querySelector('.total-payment').textContent = `Total: $${payment.toFixed(2)}`;
 }
+
 
  // Event listener for quantity change
  document.addEventListener('input', function (e) {
@@ -91,21 +108,3 @@ function updateCartTable() {
          updateCartTable(); // Update cart after removal
      }
  });
-
-// Handle the "Calculate" button click event
-document.querySelector('.btn-calculate').addEventListener('click', function () {
-    const cartTableRows = document.querySelectorAll('.cart-table tbody tr');
-    
-    let total = 0;
-
-    cartTableRows.forEach(row => {
-        const priceElement = row.querySelector('.text-danger'); // Get the <p> with class 'text-danger' (price)
-        if (priceElement) {
-            const priceText = priceElement.textContent.replace('$', ''); // Remove '$' symbol
-            total += parseFloat(priceText); // Add the price to the total
-        }
-    });
-
-    // Update the total in the total price section
-    document.querySelector('.total-payment').textContent = `Total: $${total.toFixed(2)}`;
-});
