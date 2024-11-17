@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
 import MySQLdb
 import os
@@ -149,54 +149,130 @@ def add_product():
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         image_path = f"{app.config['UPLOAD_FOLDER']}/{filename}"
     else:
-        return "Invalid file type. Only PNG, JPG, JPEG, and GIF are allowed."
+        flash("Invalid file type. Only PNG, JPG, JPEG, and GIF are allowed.")
+        return redirect(url_for('add_product'))
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
         cursor.execute(
             "INSERT INTO product (user_id, code, name, price, des, stock, image) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (session['user_id'], code, name,price, description, stock, image_path)
+            (session['user_id'], code, name, price, description, stock, image_path)
         )
         mysql.connection.commit()
 
-        # Redirect back to the add product form with a success flag
-        return redirect(url_for('products', success=True))
+        flash("Product added successfully!")
+        return redirect(url_for('products'))
     except MySQLdb.Error as e:
         mysql.connection.rollback()
-        return f"Failed to add product: {e}"
+        flash(f"Failed to add product: {e}")
+        return redirect(url_for('add_product'))
     finally:
         cursor.close()
+
 
 # Route to fetch and display all products
 @app.route('/products')
 def products():
     if 'user_id' not in session:
         return redirect(url_for('show_login_form'))  # Redirect to login if not logged in
-    print(session.get('user_id'))
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
         cursor.execute("SELECT * FROM product WHERE user_id = %s", (session['user_id'],))
         products = cursor.fetchall()
-        
-        print(products)
-
-        return render_template('products.html', products=products)
+        return render_template('products.html', products=products, name=session['username'])
     except MySQLdb.Error as e:
-        return f"Failed to fetch products: {e}"
+        flash(f"Failed to fetch products: {e}")
+        return redirect(url_for('dashboard'))
     finally:
         cursor.close()
 
 
-# Prevent back button after logout
-@app.after_request
-def prevent_back_on_logout(response):
-    if request.endpoint == 'logout':
-        response.headers['Cache-Control'] = 'no-store'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-    return response
+# Route to handle product update
+@app.route('/edit_product', methods=['POST'])
+def update_product():
+    if 'user_id' not in session:
+        return redirect(url_for('show_login_form'))  # Redirect to login if not logged in
+
+    id = request.form['product_id']
+    name = request.form['upname']
+    code = request.form['upcode']
+    price = float(request.form['upprice'])
+    stock = request.form['upstock']
+    description = request.form['updescription']
+    file = request.files['upimage']
+    image_path = None
+
+    # If a new file is uploaded, process it
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        image_path = f"{app.config['UPLOAD_FOLDER']}/{filename}"
+    
+    # If no new file is uploaded, keep the current image
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        if image_path:  # If a new image is uploaded, update the image path
+            cursor.execute(""" 
+                UPDATE product 
+                SET name = %s, code = %s, price = %s, des = %s, stock = %s, image = %s 
+                WHERE id = %s AND user_id = %s
+            """, (name, code, price, description, stock, image_path, id, session['user_id']))
+        else:  # If no image is uploaded, update without changing the image
+            cursor.execute(""" 
+                UPDATE product 
+                SET name = %s, code = %s, price = %s, des = %s, stock = %s 
+                WHERE id = %s AND user_id = %s
+            """, (name, code, price, description, stock, id, session['user_id']))
+        
+        mysql.connection.commit()
+
+        flash("Product updated successfully!")
+        return redirect(url_for('products'))
+
+    except MySQLdb.Error as e:
+        mysql.connection.rollback()
+        flash(f"Failed to update product: {e}")
+        return redirect(url_for('products'))
+    finally:
+        cursor.close()
+
+
+# Route to handle product deletion
+@app.route('/delete_product', methods=['POST'])
+def delete_product():
+    if 'user_id' not in session:
+        return redirect(url_for('show_login_form'))  # Redirect to login if not logged in
+
+    id = request.form['del_id']
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # First, fetch the product details to check if the image exists
+        cursor.execute("SELECT image FROM product WHERE id = %s AND user_id = %s", (id, session['user_id']))
+        product = cursor.fetchone()
+
+        if not product:
+            flash("Product not found.")
+            return redirect(url_for('products'))  # Redirect to products if not found
+
+        # Delete product from the database
+        cursor.execute("DELETE FROM product WHERE id = %s AND user_id = %s", (id, session['user_id']))
+        mysql.connection.commit()
+
+        # If the image exists, delete it from the server
+        if product['image'] and os.path.exists(product['image']):
+            os.remove(product['image'])
+
+        flash("Product deleted successfully!")
+        return redirect(url_for('products'))
+
+    except MySQLdb.Error as e:
+        mysql.connection.rollback()
+        flash(f"Failed to delete product: {e}")
+        return redirect(url_for('products'))
+    finally:
+        cursor.close()
 
 
 if __name__ == '__main__':
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create upload folder if it doesn't exist
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True)
