@@ -44,14 +44,14 @@
             </li>
             <li class="p-3 hover-li rounded-3">
               <a href="/order" class="nav-link d-flex align-items-center">
-                <i class="bi bi-house-heart fs-4 m"></i>
-                <p class="m-0 ms-2">Dashboard</p>
+                <i class="bi bi-cart4 fs-4 m"></i>
+                <p class="m-0 ms-2">Order Record</p>
               </a>
             </li>
             <li class="p-3 hover-li rounded-3">
               <a href="/customer" class="nav-link d-flex align-items-center">
-                <i class="bi bi-house-heart fs-4 m"></i>
-                <p class="m-0 ms-2">Dashboard</p>
+                <i class="bi bi-person-circle fs-4 m"></i>
+                <p class="m-0 ms-2">Customer Record</p>
               </a>
             </li>
           </ul>
@@ -206,7 +206,8 @@
                   <p class=" mb-0 total-payment">Total: $0.00</p>
                 </div>
                 <div>
-                  <button class="btn bg-pink text-light ">Check Out</button>
+                  <button class="btn bg-danger text-light clear-all">Clear All</button>
+                  <button class="btn bg-pink text-light " data-bs-toggle="modal" data-bs-target="#CustomerModal">Check Out</button>
                 </div>
               </div>
             </div>
@@ -496,6 +497,94 @@
       </div>
     </div>
     <!-- modal-delete -->
+
+     <!-- modal-customer -->
+     <div class="modal fade font-varela" id="CustomerModal" >
+       <div class="modal-dialog modal-lg">
+        <div class="modal-content ">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Customer Information</h1>
+            <button
+              type="button"
+              class="btn-close shadow-none"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-4">        
+            <div class="d-flex">
+              <div class="col-6 pe-4 scroll-none " >
+                <div style="height: 320px !important; overflow-y: scroll;" class="scroll-none" >
+                  <table class="table rounded-2 overflow-hidden" style="width: 100%;" id="cartTableModal">
+                    <thead>
+                      <tr class="text-light">
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody >
+                   
+                    </tbody>
+                  </table>
+                </div>
+                <p class=" m-0" id="modalTotal"></p>
+              </div>
+              <div class="col-6 ps-3" >
+
+                <form
+                  id="process-order-form"
+                  action="{{url_for('order_process')}}"
+                  method="POST"
+                >
+
+                <!-- <input type="hidden" id="customer_id" name="customer_id" /> -->
+                <input type="hidden" id="product_ids" name="product_ids" />
+                <input type="hidden" id="user_id" name="user_id" value="{{ session['user_id'] }}" />
+
+                  <label for="name">Customer Name*</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Customer Name..."
+                    class="form-control shadow-none rounded-2 border border-1 my-2 bg-light"
+                    required
+                  />
+                  <label for="tel">Tel*</label>
+                  <input
+                    type="text"
+                    id="tel"
+                    name="tel"
+                    placeholder="Cutomer Tel..."
+                    class="form-control shadow-none rounded-2 border border-1 my-2 bg-light"
+                    required
+                  />
+                  <label for="location">Location*</label>
+                  <textarea
+                    id="location"
+                    name="location"
+                    required
+                    class="form-control shadow-none rounded-2 border border-1 my-2 bg-light"
+                    rows="4"
+                    placeholder="Customer Location..."
+                    style="resize: none"  
+                  ></textarea>
+                  <input type="hidden" id="order_details" name="order_details" />
+                  <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn bg-primary text-light rounded-3">
+                      Proccess Order
+                    </button>
+                  </div>
+                </form>
+                </div>
+              </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- modal-customer -->
 
   
   </body>

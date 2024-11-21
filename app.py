@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, redirect, url_for, session, f
 from flask_mysqldb import MySQL
 import MySQLdb
 import os
+import json
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -110,7 +111,35 @@ def login():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('show_login_form'))  # Redirect to login if not logged in
-    return render_template("dashboard.html", name=session['username'])
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    try:
+        # Fetch count of customers, products, and orders
+        cursor.execute("SELECT COUNT(*) AS customer_count FROM customer WHERE user_id = %s", (session['user_id'],))
+        customer_count = cursor.fetchone()['customer_count']
+
+        cursor.execute("SELECT COUNT(*) AS product_count FROM product WHERE user_id = %s", (session['user_id'],))
+        product_count = cursor.fetchone()['product_count']
+
+        cursor.execute("SELECT COUNT(*) AS order_count FROM `order` WHERE user_id = %s", (session['user_id'],))
+        order_count = cursor.fetchone()['order_count']
+
+        # Fetch total order amount
+        cursor.execute("SELECT SUM(total) AS total_order_amount FROM `order` WHERE user_id = %s", (session['user_id'],))
+        total_order_amount = cursor.fetchone()['total_order_amount'] or 0  # Default to 0 if no orders
+
+        return render_template("dashboard.html", name=session['username'],
+                               customer_count=customer_count, 
+                               product_count=product_count,
+                               order_count=order_count,
+                               total_order_amount=total_order_amount)
+
+    except MySQLdb.Error as e:
+        flash(f"Error fetching dashboard data: {e}")
+        return redirect(url_for('dashboard'))
+    finally:
+        cursor.close()
 
 
 # Logout route
@@ -273,6 +302,78 @@ def delete_product():
     finally:
         cursor.close()
 
+@app.route('/process_order', methods=['POST'])
+def order_process():
+    if 'user_id' not in session:
+        return redirect(url_for('show_login_form'))  # Ensure the user is logged in
+
+    # Retrieve the order details from the form
+    order_details = request.form.get('order_details')  # This will be a JSON string
+
+    # Convert the JSON string to a Python object (list of orders)
+    try:
+        order_details = json.loads(order_details)
+    except ValueError as e:
+        flash("Invalid order data received.")
+        return redirect(url_for('products'))  # Redirect to cart if invalid order data
+
+    # Retrieve customer information from the form
+    customer_name = request.form.get('name')
+    customer_tel = request.form.get('tel')
+    customer_location = request.form.get('location')
+    customer_userid = request.form.get('user_id')
+
+    # Start a database transaction
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # Insert new customer data (no need to check if customer already exists)
+        cursor.execute("""INSERT INTO customer (name, tel, location, date, user_id) 
+                          VALUES (%s, %s, %s, NOW(), %s)""", 
+                       (customer_name, customer_tel, customer_location, customer_userid))
+
+        # Get the customer_id of the newly inserted customer
+        cursor.execute("SELECT LAST_INSERT_ID()")
+        customer_id = cursor.fetchone()['LAST_INSERT_ID()']
+        flash("New customer created and order processed!")
+
+        # Insert each ordered item into the order_details table and update the stock
+        for order in order_details:
+            cursor.execute("""
+                INSERT INTO `order` (product_id, customer_id, user_id, qty, total, date) 
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (order['product_id'], customer_id, order['user_id'], order['qty'], order['total']))
+
+            # Update product stock
+            cursor.execute("""
+                UPDATE product 
+                SET stock = stock - %s 
+                WHERE id = %s
+            """, (order['qty'], order['product_id']))
+
+        # Commit all the changes to the database
+        mysql.connection.commit()
+
+        return redirect(url_for('products'))  # Redirect to order confirmation page
+
+    except MySQLdb.Error as e:
+        mysql.connection.rollback()
+        flash(f"Failed to process the order: {e}")
+        return redirect(url_for('products'))  # Redirect back to cart on error
+
+    finally:
+        cursor.close()
+
+@app.route('/order')
+def order_record():
+    error = request.args.get('error')
+    error_message = "Invalid login credentials."
+
+    # Check if the user is logged in (session exists)
+    if 'user_id' not in session:
+        return redirect(url_for('show_login_form'))
+
+    # Render the order record template
+    return render_template('orderRecord.html', error=error, error_message=error_message)
 
 if __name__ == '__main__':
     app.run(debug=True)

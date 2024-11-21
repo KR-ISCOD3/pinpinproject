@@ -25,7 +25,9 @@
 .bg-pink{
     background-color: #c11c84 !important;
 }
-
+.text-pink{
+    color: #c11c84 !important;
+}
 /* ---------- text-limit -------- */
 .text-limit-1line {
     overflow: hidden;
@@ -55,4 +57,10 @@
 
 .scroll-none::-webkit-scrollbar{
     width: 0px;
+}
+
+.text-ellipsis{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
