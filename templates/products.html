@@ -88,8 +88,9 @@
             <!-- search-box and btn create -->
             <div class="d-flex justify-content-between border-bottom pb-3">
               <div class="rounded-3 overflow-hidden col-6">
-                <form action="" class="d-flex">
+                <form action="{{ url_for('search_products') }}" method="GET" class="d-flex">
                   <input
+                    name="query"
                     type="text"
                     placeholder="Search..."
                     class="form-control shadow-none rounded-0 border-0"

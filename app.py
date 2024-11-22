@@ -308,10 +308,9 @@ def order_process():
     if 'user_id' not in session:
         return redirect(url_for('show_login_form'))  # Ensure the user is logged in
 
-    # Retrieve the order details from the form
+    # Retrieve the order details from the form (JSON string containing list of orders)
     order_details = request.form.get('order_details')  # This will be a JSON string
 
-    # Convert the JSON string to a Python object (list of orders)
     try:
         order_details = json.loads(order_details)
     except ValueError as e:
@@ -326,31 +325,26 @@ def order_process():
     # Start a database transaction
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
-        # Insert new customer data (no need to check if customer already exists)
-        cursor.execute("""INSERT INTO customer (name, tel, location, date, user_id) 
-                          VALUES (%s, %s, %s, NOW(), %s)""", 
-                       (customer_name, customer_tel, customer_location, session['user_id']))
+        # Step 1: Insert new customer data (no need to check if customer already exists)
+        cursor.execute("""
+            INSERT INTO customer (name, tel, location, date, user_id) 
+            VALUES (%s, %s, %s, NOW(), %s)
+        """, (customer_name, customer_tel, customer_location, session['user_id']))
 
-        # Get the customer_id of the newly inserted customer
+        # Step 2: Get the customer_id of the newly inserted customer
         cursor.execute("SELECT LAST_INSERT_ID()")
         customer_id = cursor.fetchone()['LAST_INSERT_ID()']
 
-        # Insert each ordered item into the order table and update the stock
+        # Step 3: Insert each ordered item into the order table
         for order in order_details:
             cursor.execute("""
                 INSERT INTO `order` (product_id, customer_id, user_id, qty, total, date) 
                 VALUES (%s, %s, %s, %s, %s, NOW())
             """, (order['product_id'], customer_id, session['user_id'], order['qty'], order['total']))
 
-            # Update the stock for each ordered product
-            cursor.execute("""
-                UPDATE product 
-                SET stock = stock - %s 
-                WHERE id = %s AND user_id = %s
-            """, (order['qty'], order['product_id'], session['user_id']))
-
         # Commit the transaction
         mysql.connection.commit()
+
         flash("Order processed successfully!")
         return redirect(url_for('products'))
 
@@ -424,6 +418,30 @@ def fetch_customers():
     except MySQLdb.Error as e:
         return render_template('error.html', message=f"Error: {e}")
 
+    finally:
+        cursor.close()
+
+@app.route('/search_products', methods=['GET'])
+def search_products():
+    if 'user_id' not in session:
+        return redirect(url_for('show_login_form'))  # Redirect to login if not logged in
+
+    query = request.args.get('query', '').strip()
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # Search for products matching the query in the name, code, or description
+        cursor.execute("""
+            SELECT * FROM product 
+            WHERE user_id = %s 
+            AND (name LIKE %s OR code LIKE %s OR des LIKE %s)
+        """, (session['user_id'], f"%{query}%", f"%{query}%", f"%{query}%"))
+        products = cursor.fetchall()
+
+        return render_template('products.html', products=products, name=session['username'])
+    except MySQLdb.Error as e:
+        flash(f"Failed to search products: {e}")
+        return redirect(url_for('products'))
     finally:
         cursor.close()
 
