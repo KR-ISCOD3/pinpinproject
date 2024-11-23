@@ -45,25 +45,41 @@ def register():
     email = request.form['email']
     password = request.form['password']
     
+    if not username or not email or not password:
+        flash("All fields are required.")
+        return redirect(url_for('register'))  # Or render the register page again
+
+    # Check if the username or email already exists
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT * FROM users WHERE username = %s OR email = %s", (username, email))
+    existing_user = cursor.fetchone()
+    
+    if existing_user:
+        flash("Username or Email already exists.")
+        return redirect(url_for('register'))
+    
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
+        # Insert the new user
         cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", 
                        (username, email, hashed_password))
         mysql.connection.commit()
 
+        # Retrieve the user from the database
         cursor.execute("SELECT * FROM users WHERE username = %s OR email = %s", (username, email))
         user = cursor.fetchone()
 
+        # Set user session
         session['user_id'] = user['id']
         session['username'] = user['username']
 
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('show_login_form'))
     
     except MySQLdb.Error as e:
         mysql.connection.rollback()
-        return f"Failed to register: {e}"
+        flash(f"Failed to register: {e}")
+        return redirect(url_for('register'))  # Or render the register page again
     finally:
         cursor.close()
 
@@ -151,13 +167,13 @@ def logout():
 
 
 # Route to render the add product form
-@app.route('/add_product')
-def show_add_product_form():
-    if 'user_id' not in session:
-        return redirect(url_for('show_login_form'))
+# @app.route('/add_product', methods=['GET'])
+# def show_add_product_form():
+#     if 'user_id' not in session:
+#         return redirect(url_for('show_login_form'))
     
-    success = request.args.get('success', False)
-    return render_template('products.html', success=success)
+#     success = request.args.get('success', False)
+#     return render_template('products.html', success=success)
 
 
 # Route to handle product submission
@@ -175,11 +191,11 @@ def add_product():
 
     # Check if the product code is unique
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM product WHERE code = %s", (code,))
-    existing_product = cursor.fetchone()
-    if existing_product:
-        flash("Product code already exists. Please use a different code.")
-        return redirect(url_for('add_product'))
+    # cursor.execute("SELECT * FROM product WHERE code = %s", (code,))
+    # existing_product = cursor.fetchone()
+    # if existing_product:
+    #     flash("Product code already exists. Please use a different code.")
+    #     return redirect(url_for('products'))
 
     # Validate the file type
     if file and allowed_file(file.filename):
@@ -188,7 +204,7 @@ def add_product():
         image_path = f"{app.config['UPLOAD_FOLDER']}/{filename}"
     else:
         flash("Invalid file type. Only PNG, JPG, JPEG, and GIF are allowed.")
-        return redirect(url_for('add_product'))
+        return redirect(url_for('products'))
 
     # Insert the product into the database
     try:
@@ -202,7 +218,7 @@ def add_product():
     except MySQLdb.Error as e:
         mysql.connection.rollback()
         flash(f"Failed to add product: {e}")
-        return redirect(url_for('add_product'))
+        return redirect(url_for('products'))
     finally:
         cursor.close()
 
