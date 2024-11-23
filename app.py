@@ -27,7 +27,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Function to check allowed file extensions
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    # Allow all files by removing the check for allowed extensions
+    return '.' in filename
 
 
 # Route to render registration form
@@ -90,8 +91,8 @@ def show_login_form():
     error = request.args.get('error')
     error_message = "Invalid login credentials." if error == 'True' else None
 
-    if 'user_id' in session:
-        return redirect(url_for('dashboard'))  # Redirect if already logged in
+    # if 'user_id' in session:
+    #     return redirect(url_for('dashboard'))  # Redirect if already logged in
 
     return render_template('login.html', error_message=error_message)
 
