@@ -164,7 +164,7 @@ def show_add_product_form():
 @app.route('/add_product', methods=['POST'])
 def add_product():
     if 'user_id' not in session:
-        return redirect(url_for('show_login_form'))
+        return redirect(url_for('show_login_form'))  # Redirect to login if not logged in
 
     name = request.form['name']
     code = request.form['code']
@@ -173,6 +173,15 @@ def add_product():
     description = request.form['description']
     file = request.files['image']
 
+    # Check if the product code is unique
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT * FROM product WHERE code = %s", (code,))
+    existing_product = cursor.fetchone()
+    if existing_product:
+        flash("Product code already exists. Please use a different code.")
+        return redirect(url_for('add_product'))
+
+    # Validate the file type
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -181,7 +190,7 @@ def add_product():
         flash("Invalid file type. Only PNG, JPG, JPEG, and GIF are allowed.")
         return redirect(url_for('add_product'))
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    # Insert the product into the database
     try:
         cursor.execute(
             "INSERT INTO product (user_id, code, name, price, des, stock, image) VALUES (%s, %s, %s, %s, %s, %s, %s)",
@@ -189,8 +198,7 @@ def add_product():
         )
         mysql.connection.commit()
 
-        flash("Product added successfully!")
-        return redirect(url_for('products'))
+        return redirect(url_for('products'))  # Redirect to products page after successful insert
     except MySQLdb.Error as e:
         mysql.connection.rollback()
         flash(f"Failed to add product: {e}")
@@ -216,46 +224,45 @@ def products():
         cursor.close()
 
 
-# Route to handle product update
 @app.route('/edit_product', methods=['POST'])
 def update_product():
     if 'user_id' not in session:
         return redirect(url_for('show_login_form'))  # Redirect to login if not logged in
 
-    id = request.form['product_id']
-    name = request.form['upname']
-    code = request.form['upcode']
-    price = float(request.form['upprice'])
-    stock = request.form['upstock']
-    description = request.form['updescription']
-    file = request.files['upimage']
-    image_path = None
+    product_id = request.form.get('product_id')
+    name = request.form.get('upname')
+    code = request.form.get('upcode')
+    price = float(request.form.get('upprice', 0))
+    stock = request.form.get('upstock')
+    description = request.form.get('updescription')
+    file = request.files.get('upimage')
 
-    # If a new file is uploaded, process it
+    # Fetch current product details to retain current image if no new one is uploaded
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT image FROM product WHERE id = %s AND user_id = %s", 
+                   (product_id, session['user_id']))
+    product = cursor.fetchone()
+    current_image = product['image'] if product else None
+
+    image_path = current_image  # Default to current image path
+
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         image_path = f"{app.config['UPLOAD_FOLDER']}/{filename}"
-    
-    # If no new file is uploaded, keep the current image
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
     try:
-        if image_path:  # If a new image is uploaded, update the image path
+        if product_id:  # Ensure product_id is valid
             cursor.execute(""" 
                 UPDATE product 
                 SET name = %s, code = %s, price = %s, des = %s, stock = %s, image = %s 
                 WHERE id = %s AND user_id = %s
-            """, (name, code, price, description, stock, image_path, id, session['user_id']))
-        else:  # If no image is uploaded, update without changing the image
-            cursor.execute(""" 
-                UPDATE product 
-                SET name = %s, code = %s, price = %s, des = %s, stock = %s 
-                WHERE id = %s AND user_id = %s
-            """, (name, code, price, description, stock, id, session['user_id']))
+            """, (name, code, price, description, stock, image_path, product_id, session['user_id']))
+            mysql.connection.commit()
+            flash("Product updated successfully!")
+        else:
+            flash("Invalid product ID.")
         
-        mysql.connection.commit()
-
-        flash("Product updated successfully!")
         return redirect(url_for('products'))
 
     except MySQLdb.Error as e:

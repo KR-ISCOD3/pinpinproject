@@ -100,11 +100,130 @@
                   </button>
                 </form>
               </div>
-              <button class="bg-pink btn shadow-none text-light" data-bs-toggle="modal" data-bs-target="#Modal">
+              <button class="bg-pink btn shadow-none text-light" data-bs-toggle="modal" data-bs-target="#add-modal">
                 + Create New
               </button>
             </div>
             <!-- search-box and btn create -->
+
+            <!-- modal-add -->
+              <div class="modal fade font-varela" id="add-modal">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5" id="exampleModalLabel">Form Add</h1>
+                      <button
+                        type="button"
+                        class="btn-close shadow-none"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
+                    </div>
+                    <div class="modal-body p-5">
+                      <form
+                        id="add-product-form"
+                        action="{{ url_for('add_product') }}"
+                        method="POST"
+                        enctype="multipart/form-data"
+                      >
+                        <div class="d-flex justify-content-between">
+                          <div class="col-4">
+                            <label for="code">Product Code*</label>
+                            <input
+                              type="text"
+                              id="code"
+                              name="code"
+                              placeholder="Product Code..."
+                              class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
+                              required
+                            />
+                          </div>
+                          <div class="col-4 px-2">
+                            <label for="name">Product Name*</label>
+                            <input
+                              type="text"
+                              id="name"
+                              name="name"
+                              placeholder="Product Name..."
+                              class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
+                              required
+                            />
+                          </div>
+                          <div class="col-4">
+                            <label for="price">Price*</label>
+                            <input
+                              type="text"
+                              id="price"
+                              name="price"
+                              placeholder="Product Price..."
+                              class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div
+                          class="d-flex justify-content-between my-3 border-bottom pb-4"
+                        >
+                          <div class="col-4">
+                            <label for="stock">Stock*</label>
+                            <input
+                              type="number"
+                              id="stock"
+                              name="stock"
+                              placeholder="Product Stock..."
+                              class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
+                              required
+                            />
+                          </div>
+                          <div class="col-8 d-flex ps-2">
+                            <div class="col-2">
+                              <div
+                                class="rounded-3 overflow-hidden border border-1"
+                                style="width: 70px; height: 70px"
+                              >
+                                <img
+                                  id="pic"
+                                  src="https://placehold.co/70x70.png"
+                                  alt=""
+                                  class="object-fit-cover w-100 h-100"
+                                />
+                              </div>
+                            </div>
+                            <div class="col-10">
+                              <label for="image">Product Image*</label><br />
+                              <input
+                                type="file"
+                                id="image"
+                                name="image"
+                                required
+                                class="form-control shadow-none rounded-2 border border-1 mt-2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <label for="description">Description*</label>
+                        <textarea
+                          id="description"
+                          name="description"
+                          required
+                          class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
+                          rows="4"
+                          placeholder="Product Description..."
+                          style="resize: none"
+                        ></textarea>
+                        <div class="d-flex justify-content-end mt-3">
+                          <button type="submit" class="btn bg-pink text-light rounded-3">
+                            Add Product
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <!-- modal-add -->
 
             <!-- get card from db -->
             <div class="row m-0 overflow-y-scroll">
@@ -220,130 +339,6 @@
       <!-- right-bar -->
     </div>
 
-    <!-- message after add-product -->
-
-
-    <!-- message after add-product -->
-
-    <!-- modal-add -->
-    <div class="modal fade font-varela" id="Modal">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Form Add</h1>
-            <button
-              type="button"
-              class="btn-close shadow-none"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body p-5">
-            <form
-              id="add-product-form"
-              action="{{ url_for('add_product') }}"
-              method="POST"
-              enctype="multipart/form-data"
-            >
-              <div class="d-flex justify-content-between">
-                <div class="col-4">
-                  <label for="code">Product Code*</label>
-                  <input
-                    type="text"
-                    id="code"
-                    name="code"
-                    placeholder="Product Code..."
-                    class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
-                    required
-                  />
-                </div>
-                <div class="col-4 px-2">
-                  <label for="name">Product Name*</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    placeholder="Product Name..."
-                    class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
-                    required
-                  />
-                </div>
-                <div class="col-4">
-                  <label for="price">Price*</label>
-                  <input
-                    type="text"
-                    id="price"
-                    name="price"
-                    placeholder="Product Price..."
-                    class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div
-                class="d-flex justify-content-between my-3 border-bottom pb-4"
-              >
-                <div class="col-4">
-                  <label for="stock">Stock*</label>
-                  <input
-                    type="number"
-                    id="stock"
-                    name="stock"
-                    placeholder="Product Stock..."
-                    class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
-                    required
-                  />
-                </div>
-                <div class="col-8 d-flex ps-2">
-                  <div class="col-2">
-                    <div
-                      class="rounded-3 overflow-hidden border border-1"
-                      style="width: 70px; height: 70px"
-                    >
-                      <img
-                        id="pic"
-                        src="https://placehold.co/70x70.png"
-                        alt=""
-                        class="object-fit-cover w-100 h-100"
-                      />
-                    </div>
-                  </div>
-                  <div class="col-10">
-                    <label for="image">Product Image*</label><br />
-                    <input
-                      type="file"
-                      id="image"
-                      name="image"
-                      required
-                      class="form-control shadow-none rounded-2 border border-1 mt-2"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <label for="description">Description*</label>
-              <textarea
-                id="description"
-                name="description"
-                required
-                class="form-control shadow-none rounded-2 border border-1 mt-2 bg-light"
-                rows="4"
-                placeholder="Product Description..."
-                style="resize: none"
-              ></textarea>
-              <div class="d-flex justify-content-end mt-3">
-                <button type="submit" class="btn bg-pink text-light rounded-3">
-                  Add Product
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- modal-add -->
-
     <!-- modal-update -->
     <div class="modal fade font-varela" id="UpdateModal">
       <div class="modal-dialog modal-lg">
@@ -364,7 +359,7 @@
               method="POST"
               enctype="multipart/form-data"
             >
-              <input type="hidden" id="product_id" name="product_id" />
+              <input type="text" id="product_id" name="product_id" />
               <div class="d-flex justify-content-between">
                 <div class="col-4">
                   <label for="upcode">Product Code*</label>
